@@ -57,9 +57,9 @@ const userController = {
       const token = jwt.sign(userData, process.env.JWT_SECRET, { expiresIn: '30d' }) // 簽發 JWT，效期為 30 天
       res.status(200).json({
         status: 'success',
+        message: `${userData.account}已經成功登入!`,
         data: {
           token,
-          message: `${userData.account}已經成功登入!`,
           user: {
             ...userData,
             updatedAt: dayjs(userData.updatedAt).tz('Asia/Taipei').format('YYYY-MM-DD HH:mm:ss'),
