@@ -9,7 +9,8 @@ const passport = require('./config/passport')
 const session = require('express-session')
 const app = express()
 const port = process.env.PORT || 3000
-const apis = require('./routes')
+// const apis = require('./routes')
+const routes = require('./routes')
 
 const SESSION_SECRET = 'secret'
 // use helpers.getUser(req) to replace req.user
@@ -26,8 +27,8 @@ app.use(passport.initialize()) // 初始化 Passport
 app.use(passport.session()) // 啟動Passport 存入session
 
 // app.get('/', (req, res) => res.send('Hello World!'))
-
-app.use('/api', apis)
+app.use(routes)
+// app.use('/api', apis)
 // app.listen(port, () => console.log(`Example app listening on port ${port}!`))
 app.listen(port, () => console.log(`http://localhost:${port}`))
 module.exports = app
