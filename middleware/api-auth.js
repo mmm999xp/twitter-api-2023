@@ -9,10 +9,10 @@ const authenticatedAdmin = (req, res, next) => {
   return res.status(403).json({ status: 'error', message: '沒有admin權限' })
 }
 
-// uthenticatedAdmin 確認當前使用者是否為登入者
+// authenticatedAdmin 確認當前使用者是否為登入者
 const authenticatedCurrentUser = (req, res, next) => {
   if (helpers.getUser(req).id === Number(req.params.id)) return next()
-  return res.statys(403).json({
+  return res.status(403).json({
     status: 'error',
     message: '只能編輯自己的資料!'
   })
