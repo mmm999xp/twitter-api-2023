@@ -11,7 +11,7 @@ dayjs.extend(timezone) // 使用時區套件
 const userController = {
   signUp: (req, res, next) => {
     // 如果二次輸入的密碼不同，就建立一個 Error 物件並拋出
-    if (req.body.password !== req.body.confirmPassword) throw new Error('二次輸入密碼不符合!')
+    if (req.body.password !== req.body.checkPassword) throw new Error('二次輸入密碼不符合!')
     // 檢查name字數，上限為50字
     if (req.body.name.length > 50) throw new Error('字數超出上限！')
     // 查找是否有該帳戶或email
