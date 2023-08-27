@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs') // 載入 bcrypt
 const jwt = require('jsonwebtoken')
 
-const { User, Followship, Tweet, Reply } = require('../models')
+const { User, Followship, Tweet, Reply, Like } = require('../models')
 const dayjs = require('dayjs')
 const utc = require('dayjs/plugin/utc') // 引入 UTC 套件
 const timezone = require('dayjs/plugin/timezone') // 引入時區套件
@@ -129,6 +129,12 @@ const userController = {
           err.status = 404
           throw err
         }
+        if (tweets.length === 0) {
+          return res.status(200).json({
+            status: 'success',
+            message: '此使用者沒有任何推文'
+          })
+        }
         return tweets.map(tweet => ({ ...tweet }))
       })
       .then(tweets => res.status(200).json(tweets))
@@ -137,11 +143,58 @@ const userController = {
   getUserReplies: (req, res, next) => {
     // 瀏覽某使用者回覆過的留言
     const paramsUserId = Number(req.params.id)
-    Reply.findAll({
-      where: { UserId: paramsUserId },
-      raw: true
-    })
-      .then(Replies => res.status(200).json(Replies))
+    Promise.all([
+      User.findByPk(paramsUserId),
+      Reply.findAll({
+        where: { UserId: paramsUserId },
+        include: [
+          { model: Tweet }
+        ]
+      })
+    ])
+      .then(([user, replies]) => {
+        if (!user) {
+          const err = new Error('使用者不存在！')
+          err.status = 404
+          throw err
+        }
+        if (replies.length === 0) {
+          return res.status(200).json({
+            status: 'success',
+            message: '此使用者沒有任何回覆'
+          })
+        }
+        return res.status(200).json(replies)
+      })
+      .catch(err => next(err))
+  },
+  getUserLikes: (req, res, next) => {
+    // 瀏覽某使用者點過的 Like
+    const paramsUserId = Number(req.params.id)
+    Promise.all([
+      User.findByPk(paramsUserId),
+      Like.findAll({
+        where: { UserId: paramsUserId },
+        include: [
+          { model: Tweet }
+        ]
+      })
+    ])
+      .then(([user, likes]) => {
+        if (!user) {
+          const err = new Error('使用者不存在！')
+          err.status = 404
+          throw err
+        }
+        if (likes.length === 0) {
+          return res.status(200).json({
+            status: 'success',
+            message: '此使用者沒有任何Like'
+          })
+        }
+        return res.status(200).json(likes)
+      })
+      .catch(err => next(err))
   }
 }
 
