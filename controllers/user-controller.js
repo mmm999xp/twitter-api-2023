@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs') // 載入 bcrypt
 const jwt = require('jsonwebtoken')
 
-const { User, Followship, Tweet } = require('../models')
+const { User, Followship, Tweet, Reply } = require('../models')
 const dayjs = require('dayjs')
 const utc = require('dayjs/plugin/utc') // 引入 UTC 套件
 const timezone = require('dayjs/plugin/timezone') // 引入時區套件
@@ -133,6 +133,15 @@ const userController = {
       })
       .then(tweets => res.status(200).json(tweets))
       .catch(err => next(err))
+  },
+  getUserReplies: (req, res, next) => {
+    // 瀏覽某使用者回覆過的留言
+    const paramsUserId = Number(req.params.id)
+    Reply.findAll({
+      where: { UserId: paramsUserId },
+      raw: true
+    })
+      .then(Replies => res.status(200).json(Replies))
   }
 }
 
