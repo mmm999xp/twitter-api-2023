@@ -97,24 +97,21 @@ const userController = {
         res.status(200).json({
           status: 'success',
           message: loginUserId === paramsUserId ? '當前檢視自己的頁面' : '當前檢視別人的頁面',
-          user: {
-            id: user.id,
-            account: user.account,
-            email: user.email,
-            name: user.name,
-            avatar: user.avatar,
-            introduction: user.introduction,
-            role: user.role,
-            updatedAt: dayjs(user.updatedAt).tz('Asia/Taipei').format('YYYY-MM-DD HH:mm:ss'),
-            createdAt: dayjs(user.createdAt).tz('Asia/Taipei').format('YYYY-MM-DD HH:mm:ss'),
-            banner: user.banner,
-            FollowersCount: user.Followings.length, // 追蹤數
-            FollowingsCount: user.Followers.length // 被追蹤數
-          }
+          id: user.id,
+          account: user.account,
+          email: user.email,
+          name: user.name,
+          avatar: user.avatar,
+          introduction: user.introduction,
+          role: user.role,
+          updatedAt: dayjs(user.updatedAt).tz('Asia/Taipei').format('YYYY-MM-DD HH:mm:ss'),
+          createdAt: dayjs(user.createdAt).tz('Asia/Taipei').format('YYYY-MM-DD HH:mm:ss'),
+          banner: user.banner,
+          FollowersCount: user.Followings.length, // 追蹤數
+          FollowingsCount: user.Followers.length // 被追蹤數
         })
       })
       .catch(err => next(err))
-
   },
   getUserTweets: (req, res, next) => {
     // 取得該使用者的所有推文
