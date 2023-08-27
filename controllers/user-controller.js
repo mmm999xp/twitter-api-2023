@@ -71,6 +71,9 @@ const userController = {
     } catch (err) {
       next(err)
     }
+  },
+  getUserProfile: (req, res, next) => {
+    // 個人檔案
   }
 }
 
