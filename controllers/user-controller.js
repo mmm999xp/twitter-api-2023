@@ -195,6 +195,53 @@ const userController = {
         return res.status(200).json(likes)
       })
       .catch(err => next(err))
+  },
+  getUserFollowings: (req, res, next) => {
+    // 瀏覽某使用者跟隨中的人
+    const paramsUserId = Number(req.params.id)
+    Promise.all([
+      User.findByPk(paramsUserId),
+      Followship.findAll({
+        where: { followerId: paramsUserId },
+        attributes: ['followingId']
+      })
+    ])
+      .then(([user, followings]) => {
+        if (!user) {
+          const err = new Error('使用者不存在！')
+          err.status = 404
+          throw err
+        }
+        if (followings.length === 0) {
+          return res.status(200).json({
+            status: 'success',
+            message: '此使用者沒有追蹤任何人'
+          })
+        }
+        const resFollowingIds = followings.map(item => item.followingId) // 將findAll找到的追蹤的ID存成陣列，如[5,8,9]
+        return User.findAll({
+          where: {
+            id: resFollowingIds // 在用這個陣列去找使用者出來
+          },
+          attributes: { exclude: ['password', 'createdAt', 'updatedAt'] }
+        })
+      })
+      .then(users => {
+        return res.status(200).json(users.map(user => {
+          return {
+            id: user.id,
+            account: user.account,
+            name: user.name,
+            avatar: user.avatar,
+            introduction: user.introduction,
+            role: user.role,
+            updatedAt: dayjs(user.updatedAt).tz('Asia/Taipei').format('YYYY-MM-DD HH:mm:ss'),
+            createdAt: dayjs(user.createdAt).tz('Asia/Taipei').format('YYYY-MM-DD HH:mm:ss'),
+            followingId: user.id
+          }
+        }))
+      })
+      .catch(err => next(err))
   }
 }
 
