@@ -30,7 +30,11 @@ const tweetController = {
       }))
     })
 
-    .then(tweet => res.status(200).json(tweet))
+    .then(tweet => res.status(200).json({
+      tweet,
+      status: 'error',
+      message: '推文不存在',
+    }))
     .catch(err => next(err))
   },
   // 新增一筆貼文
@@ -91,15 +95,15 @@ const tweetController = {
     })
     .catch(err => next(err))
   },
+  // 按讚一筆貼文
   likeTweet: (req, res, next) => {
-    const { id } = req.params
-    console.log(id)
+    const TweetId = req.params.id
     const UserId = getUser(req).toJSON().id
 
     return Promise.all([
-      Tweet.findByPk(id),
-      Like.findOrCreate({
-        where: { UserId, TweetId: id }
+      Tweet.findByPk(TweetId),
+      Like.findOrCreate({ // 陣列第 1 項回傳 true or false`, 沒資料就建立
+        where: { UserId, TweetId}
       })
     ])
     .then(([tweet, like]) => {
@@ -118,6 +122,119 @@ const tweetController = {
         return res.status(200).json({ status: 'success' })
 
     })
+    .catch(err => next(err))
+
+    // way 2
+      // Tweet.findByPk(TweetId, {
+      //   attributes: {
+      //     include: [[sequelize.literal(`EXISTS(SELECT true FROM Likes WHERE Likes.UserId = ${UserId} AND Likes.TweetId = ${TweetId})`), 'isLiked']],
+      //     exclude: ['description', 'createdAt', 'updatedAt']
+      //   },
+      //   raw: true
+      // })
+      // .then(tweet => {
+      //   if (!tweet) throw new Error('推文不存在')
+      //   if (tweet.isLiked) throw new Error('You have liked this tweet!')
+      //   return Like.create({
+      //   UserId,
+      //   TweetId
+      //   })
+      // })
+      // .then(tweet => {tweet.isLiked = 1
+      //   res.status(200).json(tweet)
+      // })
+  },
+  // 對一筆貼文收回讚
+  unlikeTweet: (req, res, next) => {
+    const UserId = helper.getUser(req).id
+    const TweetId = req.params.id
+
+    Tweet.findByPk(TweetId)
+      .then(tweet => {
+        if (!tweet) {
+          return res.status(404).json({
+            status: 'error',
+            message: '推文不存在！'
+          })
+        }
+
+        Like.destroy({ where: { UserId, TweetId } })
+          .then(like => {
+            if (!like) {
+              return res.status(404).json({
+                status: 'error',
+                message: '未表示喜歡'
+              })
+            }
+            return res.status(200).json({ status: 'success' })
+          })
+          .catch(err => {
+            next(err)
+          })
+      })
+      .catch(err => next(err))
+      // way 2
+    // const TweetId = req.params.id
+    // const UserId = getUser(req).toJSON().id
+
+    // return Tweet.findByPk(TweetId, {
+    //   attributes: {
+    //     include: [[sequelize.literal(`EXISTS(SELECT true FROM Likes WHERE Likes.UserId = ${UserId} AND Likes.TweetId = ${TweetId})`), 'isLiked']],
+    //     exclude: ['description', 'createdAt', 'updatedAt']
+    //   },
+    //   raw: true
+    // })
+    // .then(tweet => {
+    //   if (!tweet) throw new Error('推文不存在')
+    //   if (!tweet.isLiked) throw new Error("未表示喜歡")
+    //   Like.destroy({ where: { TweetId, UserId }})
+    //   return res.status(200).json({ status: 'success' })
+    // })
+    // .catch(err => next(err))
+  },
+  // 看貼文全部回覆
+  getReplies: (req, res, next) => {
+    const TweetId = req.params.id 
+    return Reply.findAll({
+        raw: true,
+        nest: true,
+        where: { TweetId },
+        attributes: ['id', 'comment', 'createdAt'],
+        include: {
+          model: User,
+          attributes: ['id', 'avatar', 'account', 'name']
+        },
+        order: [['createdAt', 'DESC'], ['id', 'ASC']]
+      })
+    .then(replies => replies.map( reply => ({
+      ...reply,
+      createdAt: relativeTimeFromNow(reply.createdAt)
+    })))
+    .then((data) => res.status(200).json(data))
+    .catch(err => next(err))
+  },
+  // 回覆一筆貼文
+  postReply: (req, res, next) => {
+    const limitWords = 140
+    const TweetId = req.params.id
+    const UserId = getUser(req).toJSON().id
+    const { comment } = req.body
+
+    return Tweet.findByPk(TweetId, {
+      raw: true,
+      nest: true,
+    })
+    .then(tweet => {
+      if (!tweet) throw new Error('推文不存在')
+      if (!comment.trim()) throw new Error('內容不可空白')
+      if (comment.length > limitWords) throw new Error(`字數不能大於 ${limitWords} 字`)
+      return Reply.create({
+          comment,
+          UserId,
+          TweetId
+        })
+    })
+    .then((data) => res.status(200).json(data))
     .catch(err => next(err))
   }
 }

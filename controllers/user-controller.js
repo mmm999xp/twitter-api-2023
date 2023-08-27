@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs') // 載入 bcrypt
 const jwt = require('jsonwebtoken')
-const { User, Tweet } = require('../models')
+
+const { User, Followship, Tweet  } = require('../models')
 const dayjs = require('dayjs')
 const utc = require('dayjs/plugin/utc') // 引入 UTC 套件
 const timezone = require('dayjs/plugin/timezone') // 引入時區套件
@@ -113,6 +114,7 @@ const userController = {
         })
       })
       .catch(err => next(err))
+
   },
   getUserTweets: (req, res, next) => {
     // 取得該使用者的所有推文
