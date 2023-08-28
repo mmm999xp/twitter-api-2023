@@ -3,14 +3,13 @@ const express = require('express')
 const router = express.Router()
 const passport = require('../config/passport')
 // const admin = require('./modules/admin')
-
+const upload = require('../middleware/multer')
 const userController = require('../controllers/user-controller')
 const adminController = require('../controllers/admin-controller')
 const tweet = require('./modules/tweet')
 const followship = require('./modules/followship')
 const { apiErrorHandler } = require('../middleware/error-handler')
 const { authenticated } = require('../middleware/api-auth')
-
 
 // router.use('/admin', authenticated, authenticatedAdmin, admin)
 // admin
@@ -26,7 +25,7 @@ router.get('/users/:id/likes', authenticated, userController.getUserLikes) // �
 router.get('/users/:id/followings', authenticated, userController.getUserFollowings) // 瀏覽某使用者跟隨中的人
 router.get('/users/:id/followers', authenticated, userController.getUserFollowers) // 瀏覽某使用者的跟隨者
 router.get('/users/:id', authenticated, userController.getUserProfile) // 個人資料頁面
-
+router.put('/users/:id', authenticated, upload.fields([{ name: 'avatar', maxCount: 1 }, { name: 'banner', maxCount: 1 }]), userController.putUserProfile) // 編輯個人資料
 // modules
 router.use('/followships', authenticated, followship)
 router.use('/tweets', authenticated, tweet)

@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs') // 載入 bcrypt
 const jwt = require('jsonwebtoken')
-
+const { localFilesHandler } = require('../helpers/file-helpers')
 const { User, Followship, Tweet, Reply, Like } = require('../models')
 const dayjs = require('dayjs')
 const utc = require('dayjs/plugin/utc') // 引入 UTC 套件
@@ -287,6 +287,45 @@ const userController = {
             followerId: user.id
           }
         }))
+      })
+      .catch(err => next(err))
+  },
+  putUserProfile: (req, res, next) => {
+    // 編輯個人資料
+    const paramsUserId = Number(req.params.id)
+    const { name, introduction } = req.body // 這邊用name，而不是account ，account是setting的部分
+    const { files } = req // 如果前端沒有傳入檔案，這邊會是undefined
+    const loginUserId = helper.getUser(req).id
+    if (paramsUserId !== loginUserId) {
+      const err = new Error('只能編輯自己的資料！')
+      err.status = 403
+      throw err
+    }
+    if (!name || !name.trim()) throw new Error('名稱是必須的！')
+    if (name.length > 50) throw new Error('名稱長度不得超過50字!')
+    if (introduction.length > 160) throw new Error('自我介紹長度不得超過160字!')
+    // 以下三行是為了因應測試檔所做的改動，先確認files有東西，並將裡面的東西放進fileHandlers陣列裡，在Promise.all中展開使用
+    const fileHandlers = []
+    if (files && files.avatar) fileHandlers.push(localFilesHandler(files.avatar)) // 處理 avatar 的檔案
+    if (files && files.banner) fileHandlers.push(localFilesHandler(files.banner)) // 處理 banner 的檔案
+    return Promise.all([
+      User.findByPk(paramsUserId),
+      ...fileHandlers
+    ])
+      .then(([user, avatarFilePath, bannerFilePath]) => {
+        if (!user) throw new Error('使用者不存在!')
+        return user.update({
+          name: name || user.name,
+          introduction: introduction,
+          avatar: avatarFilePath ? avatarFilePath[0] : user.avatar,
+          banner: bannerFilePath ? bannerFilePath[0] : user.banner
+        })
+      })
+      .then(() => {
+        return res.status(200).json({
+          status: 'success',
+          message: '個人資料編輯完成!'
+        })
       })
       .catch(err => next(err))
   }
