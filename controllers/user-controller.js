@@ -107,8 +107,8 @@ const userController = {
           updatedAt: dayjs(user.updatedAt).tz('Asia/Taipei').format('YYYY-MM-DD HH:mm:ss'),
           createdAt: dayjs(user.createdAt).tz('Asia/Taipei').format('YYYY-MM-DD HH:mm:ss'),
           banner: user.banner,
-          FollowersCount: user.Followings.length, // 追蹤數
-          FollowingsCount: user.Followers.length // 被追蹤數
+          followingCounts: user.Followings.length, // 追蹤數
+          followerCounts: user.Followers.length // 被追蹤數
         })
       })
       .catch(err => next(err))
