@@ -328,6 +328,25 @@ const userController = {
         })
       })
       .catch(err => next(err))
+  },
+  getUserSetting: (req, res, next) => {
+    // 瀏覽設定頁面
+    const paramsUserId = Number(req.params.id)
+    const loginUserId = helper.getUser(req).id
+    if (paramsUserId !== loginUserId) {
+      const err = new Error('只能查看自己的資料！')
+      err.status = 403
+      throw err
+    }
+    return User.findByPk(paramsUserId)
+      .then(user => {
+        if (!user) throw new Error('使用者不存在!')
+        res.json({
+          account: user.account,
+          name: user.name,
+          email: user.email
+        })
+      })
   }
 }
 
