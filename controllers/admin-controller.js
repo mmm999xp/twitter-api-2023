@@ -59,6 +59,23 @@ const adminController = {
       })
       .then(users => res.status(200).json(users))
       .catch(err => next(err))
+  },
+  deleteTweet: (req, res, next) => {
+    const paramsTweetId = Number(req.params.id)
+    return Tweet.findByPk(paramsTweetId)
+      .then(tweet => {
+        if (!tweet) {
+          const err = new Error('推文不存在!')
+          err.status = 404
+          throw err
+        }
+        return tweet.destroy()
+      })
+      .then(deletedTweet => res.status(200).json({
+        status: 'success',
+        message: `id為 ${deletedTweet.id}的推文已被刪除!`
+      }))
+      .catch(err => next(err))
   }
 }
 module.exports = adminController
