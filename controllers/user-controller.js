@@ -302,8 +302,8 @@ const userController = {
       throw err
     }
     if (!name || !name.trim()) throw new Error('名稱是必須的！')
-    if (name.length > 50) throw new Error('名稱長度不得超過50字!')
-    if (introduction.length > 160) throw new Error('自我介紹長度不得超過160字!')
+    if (name.length > 50) throw new Error('名稱字數超出上限!')
+    if (introduction.length > 160) throw new Error('自我介紹字數超出上限!')
     // 以下三行是為了因應測試檔所做的改動，先確認files有東西，並將裡面的東西放進fileHandlers陣列裡，在Promise.all中展開使用
     const fileHandlers = []
     if (files && files.avatar) fileHandlers.push(localFilesHandler(files.avatar)) // 處理 avatar 的檔案
@@ -347,6 +347,61 @@ const userController = {
           email: user.email
         })
       })
+  },
+  putUserSetting: (req, res, next) => {
+    // 編輯設定頁面
+    const { account, name, email, password, checkPassword } = req.body
+    const paramsUserId = Number(req.params.id)
+    const loginUserId = helper.getUser(req).id
+    if (paramsUserId !== loginUserId) {
+      const err = new Error('只能編輯自己的資料！')
+      err.status = 403
+      throw err
+    }
+    if (!account || !account.trim()) throw new Error('帳號是必須的！')
+    if (!name || !name.trim()) throw new Error('名稱是必須的！')
+    if (name.length > 50) throw new Error('名稱字數超出上限!')
+    if (!email || !email.trim()) throw new Error('email是必須的!')
+    if (password !== checkPassword) throw new Error('二次輸入密碼不符合!')
+    let updateData = {}
+    // 查找是否有該帳戶或email
+    Promise.all([
+      User.findOne({ where: { account: account } }),
+      User.findOne({ where: { email: email } }),
+      bcrypt.hash(password, 10)
+    ])
+      .then(([checkAccount, checkEmail, hash]) => {
+        // 如果有一樣的account或email，丟錯告知前端
+        if (checkAccount) throw new Error('account 已重複註冊！')
+        if (checkEmail) throw new Error('email 已重複註冊！')
+        // 如果檢查ok，將使用者要更新的資料存進updateData
+        updateData = {
+          email: email,
+          password: hash,
+          name: name,
+          account: account,
+          updatedAt: new Date()
+        }
+        return User.findByPk(paramsUserId)
+      })
+      .then(user => {
+        return user.update(updateData)
+      })
+      .then(user => {
+        res.status(200).json({
+          status: 'success',
+          message: `${account}已經成功修改資料!`,
+          user: {
+            id: user.id,
+            email: user.email,
+            account: user.account,
+            name: user.name,
+            updatedAt: dayjs(user.updatedAt).tz('Asia/Taipei').format('YYYY-MM-DD HH:mm:ss'),
+            createdAt: dayjs(user.createdAt).tz('Asia/Taipei').format('YYYY-MM-DD HH:mm:ss')
+          }
+        })
+      })
+      .catch(err => next(err)) // 接住前面拋出的錯誤，呼叫專門做錯誤處理的 middleware
   }
 }
 
