@@ -23,7 +23,8 @@ const corsOptions = {
   origin: [
     'http://localhost:3000',
     'https://github.com/kotjy/ac-twitter',
-    'https://kotjy.github.io/ac-twitter/'
+    'https://kotjy.github.io/ac-twitter',
+    'https://kotjy.github.io'
   ],
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
   allowedHeaders: ['Content-Type', 'Authorization']
